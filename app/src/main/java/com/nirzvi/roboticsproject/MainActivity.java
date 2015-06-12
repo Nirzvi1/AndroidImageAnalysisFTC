@@ -1,5 +1,6 @@
 package com.nirzvi.roboticsproject;
 
+import com.nirzvi.roboticslibrary.ImageAnalysis;
 import com.nirzvi.roboticslibrary.MyCamera;
 import com.nirzvi.roboticsproject.AlecImage;
 
@@ -12,8 +13,6 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.TextureView;
-import android.view.View;
-import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,9 +22,8 @@ public class MainActivity extends ActionBarActivity {
     TextureView texture;
     TextView colour;
     TextView rgb;
-    TextView rgbval;
-    ImageView img2;
     ImageView img;
+    ImageAnalysis imgA = new ImageAnalysis();
     AlecImage al;
     MyCamera cam;
     int runCount = 0;
@@ -61,14 +59,13 @@ public class MainActivity extends ActionBarActivity {
         Bitmap bm = texture.getBitmap();
 
         averageColour(bm);
-        img.setImageBitmap(al.robotSees(bm));
+        img.setImageBitmap(imgA.getEdges(bm));
     }
 
     public int averageColour(Bitmap bit) {
         long greenF = 0;
         long redF = 0;
         long blueF = 0;
-        long overallColour = 0;
         int numPixels = 0;
         int[] pixels = new int [bit.getWidth() * bit.getHeight()];
 
@@ -88,39 +85,6 @@ public class MainActivity extends ActionBarActivity {
         colour.setBackgroundColor(Color.rgb((int) redF, (int) greenF, (int) blueF));
 
         return Color.rgb((int) redF, (int) greenF, (int) blueF);
-    }
-
-    public Bitmap findEdgesVertical (Bitmap bit) {
-        int[] pixels = new int[bit.getWidth() * bit.getHeight()];
-        Bitmap newBit = bit.createBitmap(bit.getWidth(), bit.getHeight(), Bitmap.Config.ARGB_8888);
-        long colour = 0;
-        int recordPixels = 1;
-        int x = 0;
-        int y = 0;
-        Matrix matrix = new Matrix();
-        matrix.postRotate(-90);
-
-        Canvas can = new Canvas(newBit);
-        Paint colourPaint = new Paint();
-
-        bit.getPixels(pixels, 0, bit.getWidth(), 0, 0, bit.getWidth(), bit.getHeight());
-
-        colourPaint.setColor(Color.WHITE);
-        can.drawRect(0, 0, bit.getWidth(), bit.getHeight(), colourPaint);
-        colourPaint.setColor(Color.BLACK);
-
-        for (int i = 1; i < pixels.length; i++) {
-            if (Math.abs(pixels[i] - pixels[i - 1]) > accuracy) {
-                x = i % bit.getWidth();
-                y = i / bit.getWidth();
-                can.drawLine(x, y, x + 1, y, colourPaint);
-            } else {
-                recordPixels++;
-            }
-        }
-
-        return Bitmap.createBitmap(newBit, 0, 0, newBit.getWidth(), newBit.getHeight(), matrix, true);
-
     }
 
     public String closeToColour (long colour) {

@@ -3,7 +3,6 @@ package com.nirzvi.roboticslibrary;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 
 /**
@@ -17,11 +16,14 @@ public class ImageAnalysis {
 
     public Bitmap getEdges (Bitmap bit) {
 
+        int bitWidth = bit.getWidth();
+        int bitHeight = bit.getHeight();
         int[] pixels = new int[bit.getWidth() * bit.getHeight()];
         int[] storePixels;
-        Bitmap newBit = bit.createBitmap(bit.getWidth(), bit.getHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap newBit = bit.createBitmap(bitWidth, bitHeight, Bitmap.Config.ARGB_8888);
         int x;
         int y;
+        int newCoord = 0;
 
         Canvas can = new Canvas(newBit);
         Paint colourPaint = new Paint();
@@ -43,7 +45,11 @@ public class ImageAnalysis {
         storePixels = pixels;
 
         for (int i = 1; i < pixels.length; i++) {
-            pixels[i] = storePixels[(i % bit.getWidth() * bit.getWidth())];
+
+            if (!((i % bitWidth) >= bitHeight) && !((i / bitWidth) >= bitWidth))
+                newCoord = (i % bit.getWidth() * bit.getWidth()) + (i / bit.getWidth());
+
+            pixels[i] = storePixels[newCoord];
         }
 
         for (int i = 1; i < pixels.length; i++) {
