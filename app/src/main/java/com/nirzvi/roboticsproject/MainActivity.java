@@ -61,8 +61,6 @@ public class MainActivity extends ActionBarActivity {
         Bitmap bm = texture.getBitmap();
 
         averageColour(bm);
-        al.findBlob(bm);
-        al.colorName(Color.BLACK);
         img.setImageBitmap(al.robotSees(bm));
     }
 
