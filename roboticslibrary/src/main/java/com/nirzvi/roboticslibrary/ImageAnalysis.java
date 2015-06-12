@@ -11,7 +11,7 @@ import android.graphics.Paint;
  */
 public class ImageAnalysis {
 
-    public final int OUTLINES = 649999;
+    public final int OUTLINES = 650000;
     public final int DETAILS = 300000;
     public int accuracy = DETAILS;
 
