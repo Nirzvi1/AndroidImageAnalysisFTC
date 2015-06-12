@@ -76,6 +76,17 @@ public class MySensorManager {
            }
     }
 
+    public void removeSensor (String name) throws Exception {
+        for (int i = 0; i < names.length; i++) {
+            if (names[i].equals(name)) {
+                sense[i] = null;
+                return;
+            }
+        }
+
+        throw new Exception ("No sensor by that name");
+    }
+
     public float[] getValues (String name) {
         int index = 0;
 
