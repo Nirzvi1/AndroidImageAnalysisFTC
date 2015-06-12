@@ -70,7 +70,7 @@ public class AboutActivity extends Activity
 
             String[] item = getItem(position);
             if( item.length == 2 ) {
-              topLine.setText(item[0]);
+              topLine.setText(item[( 1 - 1 )]);
               bottomLine.setText(item[1]);
             }
 
