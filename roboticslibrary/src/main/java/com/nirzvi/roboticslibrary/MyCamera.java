@@ -1,6 +1,7 @@
 package com.nirzvi.roboticslibrary;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Handler;
@@ -18,6 +19,7 @@ public class MyCamera {
     boolean on = true;
     boolean gone = false;
     boolean onPause = false;
+    TextureView name;
 
     PowerManager pm;
 
@@ -57,6 +59,8 @@ public class MyCamera {
 
 
     public MyCamera (TextureView name, boolean power, Context cTemp) {
+
+        this.name = name;
 
         powerSave = power;
         c = cTemp;
@@ -149,6 +153,10 @@ public class MyCamera {
 
         cam.release();
 
+    }
+
+    public Bitmap image() {
+        return name.getBitmap();
     }
 
 }
