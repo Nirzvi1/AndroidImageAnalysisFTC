@@ -1,6 +1,7 @@
 package com.nirzvi.roboticsproject;
 
 import com.nirzvi.roboticslibrary.MyCamera;
+import com.nirzvi.roboticsproject.AlecImage;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -59,8 +60,7 @@ public class MainActivity extends ActionBarActivity {
 
         averageColour(bm);
 
-        findEdgesVertical(bm);
-
+        img.setImageBitmap(findEdgesVertical(bm));
     }
 
     public int averageColour(Bitmap bit) {
@@ -89,7 +89,7 @@ public class MainActivity extends ActionBarActivity {
         return Color.rgb((int) redF, (int) greenF, (int) blueF);
     }
 
-    public void findEdgesVertical (Bitmap bit) {
+    public Bitmap findEdgesVertical (Bitmap bit) {
         int[] pixels = new int[bit.getWidth() * bit.getHeight()];
         Bitmap newBit = bit.createBitmap(bit.getWidth(), bit.getHeight(), Bitmap.Config.ARGB_8888);
         long colour = 0;
@@ -118,7 +118,7 @@ public class MainActivity extends ActionBarActivity {
             }
         }
 
-        img.setImageBitmap(Bitmap.createBitmap(newBit, 0, 0, newBit.getWidth(), newBit.getHeight(), matrix, true));
+        return Bitmap.createBitmap(newBit, 0, 0, newBit.getWidth(), newBit.getHeight(), matrix, true);
 
     }
 
