@@ -21,8 +21,6 @@ public class ImageAnalysis {
         Bitmap newBit = bit.createBitmap(bit.getWidth(), bit.getHeight(), Bitmap.Config.ARGB_8888);
         int x;
         int y;
-        Matrix matrix = new Matrix();
-        matrix.postRotate(-90);
 
         Canvas can = new Canvas(newBit);
         Paint colourPaint = new Paint();
@@ -41,7 +39,7 @@ public class ImageAnalysis {
             }
         }
 
-        return Bitmap.createBitmap(newBit, 0, 0, newBit.getWidth(), newBit.getHeight(), matrix, true);
+        return newBit;
     }
 
     public int averageColour(Bitmap bit, int startX, int startY, int endX, int endY) {
