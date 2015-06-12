@@ -28,7 +28,6 @@ public class MainActivity extends ActionBarActivity {
     ImageView img;
     MyCamera cam;
     int runCount = 0;
-    int memorySave = 10;
     ImageAnalysis imgA = new ImageAnalysis();
 
 
@@ -42,7 +41,7 @@ public class MainActivity extends ActionBarActivity {
             public void onCameraUpdated() {
                 runCount++;
 
-                if (runCount % memorySave == 0)
+                if (runCount % 10 == 0)
                     takeImage();
             }
         };
