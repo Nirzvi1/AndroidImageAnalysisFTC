@@ -18,7 +18,7 @@ public class ImageAnalysis {
     public Bitmap getEdges (Bitmap bit) {
 
         int[] pixels = new int[bit.getWidth() * bit.getHeight()];
-        int[] storePixels = new int[pixels.length];
+        int[] storePixels;
         Bitmap newBit = bit.createBitmap(bit.getWidth(), bit.getHeight(), Bitmap.Config.ARGB_8888);
         int x;
         int y;

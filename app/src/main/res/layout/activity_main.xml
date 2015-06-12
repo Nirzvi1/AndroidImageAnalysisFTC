@@ -35,8 +35,8 @@
         android:layout_below="@+id/textureView" />
 
     <ImageView
-        android:layout_width="600dp"
-        android:layout_height="700dp"
+        android:layout_width="700dp"
+        android:layout_height="600dp"
         android:id="@+id/img"
         android:layout_toRightOf="@+id/text"
         android:layout_toEndOf="@+id/text"/>
