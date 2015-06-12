@@ -18,6 +18,7 @@ public class ImageAnalysis {
     public Bitmap getEdges (Bitmap bit) {
 
         int[] pixels = new int[bit.getWidth() * bit.getHeight()];
+        int[] storePixels = new int[pixels.length];
         Bitmap newBit = bit.createBitmap(bit.getWidth(), bit.getHeight(), Bitmap.Config.ARGB_8888);
         int x;
         int y;
@@ -30,6 +31,20 @@ public class ImageAnalysis {
         colourPaint.setColor(Color.WHITE);
         can.drawRect(0, 0, bit.getWidth(), bit.getHeight(), colourPaint);
         colourPaint.setColor(Color.BLACK);
+
+        for (int i = 1; i < pixels.length; i++) {
+            if (Math.abs(pixels[i] - pixels[i - 1]) > accuracy) {
+                x = i % bit.getWidth();
+                y = i / bit.getWidth();
+                can.drawLine(x, y, x + 1, y, colourPaint);
+            }
+        }
+
+        storePixels = pixels;
+
+        for (int i = 1; i < pixels.length; i++) {
+            pixels[i] = storePixels[(i % bit.getWidth() * bit.getWidth())];
+        }
 
         for (int i = 1; i < pixels.length; i++) {
             if (Math.abs(pixels[i] - pixels[i - 1]) > accuracy) {
