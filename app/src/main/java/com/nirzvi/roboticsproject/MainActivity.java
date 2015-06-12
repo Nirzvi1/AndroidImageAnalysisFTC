@@ -28,9 +28,6 @@ public class MainActivity extends ActionBarActivity {
     ImageView img;
     MyCamera cam;
     int runCount = 0;
-    final int OUTLINES = 650000;
-    final int DETAILS = 300000;
-    int accuracy = DETAILS;
     int memorySave = 10;
     ImageAnalysis imgA = new ImageAnalysis();
 
