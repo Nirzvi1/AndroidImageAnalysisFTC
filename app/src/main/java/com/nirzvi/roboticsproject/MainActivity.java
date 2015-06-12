@@ -26,6 +26,7 @@ public class MainActivity extends ActionBarActivity {
     TextView rgbval;
     ImageView img2;
     ImageView img;
+    AlecImage al;
     MyCamera cam;
     int runCount = 0;
     final int OUTLINES = 650000;
@@ -51,6 +52,7 @@ public class MainActivity extends ActionBarActivity {
         rgb = (TextView) findViewById(R.id.text);
         colour = (TextView) findViewById(R.id.colour);
         img = (ImageView) findViewById(R.id.img);
+        al = new AlecImage();
 
     }
 
@@ -60,7 +62,7 @@ public class MainActivity extends ActionBarActivity {
 
         averageColour(bm);
 
-        img.setImageBitmap(findEdgesVertical(bm));
+        img.setImageBitmap(al.robotSees(bm));
     }
 
     public int averageColour(Bitmap bit) {
