@@ -1,1 +1,1 @@
-include ':app', ':roboticslibrary'
+include ':app', ':roboticslibrary', ':ftcrobotcontroller'

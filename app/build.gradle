@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.nirzvi.roboticsproject"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -19,8 +19,20 @@ android {
     }
 }
 
+repositories{
+    flatDir {
+        dirs 'libs'
+    }
+}
+
 dependencies {
+    compile 'com.nirzvi.roboticsproject:FtcCommon-release:@aar'
+    compile 'com.nirzvi.roboticsproject:RobotCore-release:@aar'
+    compile 'com.nirzvi.roboticsproject:WirelessP2p-release:@aar'
+    compile 'com.nirzvi.roboticsproject:ModernRobotics-release:@aar'
+    compile 'com.nirzvi.roboticsproject:Analytics-release:@aar'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile project(':roboticslibrary')
+    compile project(':ftcrobotcontroller')
 }
