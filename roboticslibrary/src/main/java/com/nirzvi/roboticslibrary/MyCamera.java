@@ -112,7 +112,7 @@ public class MyCamera {
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+                onCameraUpdated();
             }
 
         };
@@ -152,6 +152,12 @@ public class MyCamera {
         }
 
         cam.release();
+
+    }
+
+    public void onCameraUpdated() {
+
+        //user-defined method
 
     }
 

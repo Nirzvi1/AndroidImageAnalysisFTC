@@ -39,6 +39,7 @@
         android:layout_height="600dp"
         android:id="@+id/img"
         android:layout_toRightOf="@+id/text"
-        android:layout_toEndOf="@+id/text"/>
+        android:layout_toEndOf="@+id/text"
+        android:contentDescription="edges" />
 
 </RelativeLayout>

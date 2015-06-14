@@ -28,7 +28,7 @@ public class MainActivity extends ActionBarActivity {
     AlecImage al;
     MyCamera cam;
     int runCount = 0;
-    final int OUTLINES = 650000;
+    final int OUTLINES = 1300000;
     final int DETAILS = 300000;
     int accuracy = DETAILS;
     int memorySave = 10;
@@ -53,6 +53,7 @@ public class MainActivity extends ActionBarActivity {
         img = (ImageView) findViewById(R.id.img);
         al = new AlecImage();
 
+        imgA.accuracy = imgA.DETAILS;
     }
 
     public void takeImage () {
