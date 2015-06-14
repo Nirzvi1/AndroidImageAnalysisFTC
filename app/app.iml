@@ -94,7 +94,6 @@
     <orderEntry type="library" exported="" name="d2xx" level="project" />
     <orderEntry type="library" exported="" name="appcompat-v7-22.0.0" level="project" />
     <orderEntry type="library" exported="" name="RobotCore-release-" level="project" />
-    <orderEntry type="module" module-name="ftcrobotcontroller" exported="" />
     <orderEntry type="module" module-name="roboticslibrary" exported="" />
   </component>
 </module>
