@@ -6,10 +6,19 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.AccelerationSensor;
+import com.qualcomm.robotcore.hardware.CompassSensor;
+import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.IrSeekerSensor;
+import com.qualcomm.robotcore.hardware.LightSensor;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+
 /**
  * Created by Nirzvi on 2015-05-22.
  */
-public class MySensorManager {
+public class MySensorManager extends OpMode {
 
     public final static int ACCEL = 151432;
     public final static int MAG = 38294;
@@ -20,6 +29,7 @@ public class MySensorManager {
     public final static int TEMP = 4237413;
     public final static int PROX = 4321234;
     public final static int LINEAR_ACC = 302492;
+
 
     int count = 0;
     SensorManager sm;
@@ -65,7 +75,7 @@ public class MySensorManager {
         }
 
         if (++count < 20 && !nameSame) {
-            sense[count] = new MySensor (sm, sensor);
+            sense[count] = new MySensor(sm, sensor);
             names[count] = name;
         }
         else if (count >= 20 && !nameSame)
@@ -124,6 +134,64 @@ public class MySensorManager {
         return null;
     }
 
+
+    public CompassSensor createCompass (String name) {
+        CompassSensor compass = hardwareMap.compassSensor.get(name);
+
+        return compass;
+    }
+
+    public AccelerationSensor createAcc (String name) {
+        AccelerationSensor acc = hardwareMap.accelerationSensor.get(name);
+
+        return acc;
+    }
+
+    public GyroSensor createGyro (String name) {
+        GyroSensor gyro = hardwareMap.gyroSensor.get(name);
+
+        return gyro;
+    }
+
+    public LightSensor createLight (String name) {
+        LightSensor light = hardwareMap.lightSensor.get(name);
+
+        return light;
+    }
+
+    public IrSeekerSensor createIR (String name) {
+        IrSeekerSensor irSeeker = hardwareMap.irSeekerSensor.get(name);
+
+        return irSeeker;
+    }
+
+    public UltrasonicSensor createSonic (String name) {
+        UltrasonicSensor sonic = hardwareMap.ultrasonicSensor.get(name);
+
+        return sonic;
+    }
+
+    public VoltageSensor createVolt (String name) {
+        VoltageSensor volt = hardwareMap.voltageSensor.get(name);
+
+        return volt;
+    }
+
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void loop() {
+
+    }
+
+    @Override
+    public void stop() {
+
+    }
 }
 
 class MySensor {
@@ -209,5 +277,7 @@ class MySensor {
         return sensorValues;
 
     }
+
+
 
 }

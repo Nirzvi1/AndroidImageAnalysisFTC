@@ -2,7 +2,12 @@ package com.nirzvi.roboticsproject;
 
 import com.nirzvi.roboticslibrary.ImageAnalysis;
 import com.nirzvi.roboticslibrary.MyCamera;
+import com.nirzvi.roboticslibrary.MySensorManager;
 import com.nirzvi.roboticsproject.AlecImage;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.CompassSensor;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 
 import android.graphics.Bitmap;
@@ -14,6 +19,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.TextureView;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,13 +31,7 @@ public class MainActivity extends ActionBarActivity {
     TextView rgb;
     ImageView img;
     ImageAnalysis imgA = new ImageAnalysis();
-    AlecImage al;
     MyCamera cam;
-    int runCount = 0;
-    final int OUTLINES = 1300000;
-    final int DETAILS = 300000;
-    int accuracy = DETAILS;
-    int memorySave = 10;
 
 
     @Override
@@ -40,33 +40,50 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         texture = (TextureView) findViewById(R.id.textureView);
-        cam = new MyCamera(texture, true, this) {
-            public void onCameraUpdated() {
-                runCount++;
-
-                if (runCount % memorySave == 0)
-                    takeImage();
-            }
-        };
+        cam = new MyCamera(texture, true, this);
         rgb = (TextView) findViewById(R.id.text);
         colour = (TextView) findViewById(R.id.colour);
         img = (ImageView) findViewById(R.id.img);
-        al = new AlecImage();
 
-        imgA.accuracy = imgA.DETAILS;
     }
 
-    public void takeImage () {
+    public void takeImage (View v) {
 
         Bitmap bm = texture.getBitmap();
 
-        averageColour(bm);
+        img.setImageBitmap(imgA.findBlobCircle(bm));
+    }
+
+
+    public void takeEdgeImage (View v) {
+
+        Bitmap bm = texture.getBitmap();
+
         img.setImageBitmap(imgA.getEdges(bm));
+    }
+
+
+    public void getClosest (View v) {
+
+        Bitmap bm = texture.getBitmap();
+
+        img.setImageBitmap(imgA.getAmbientEdges(bm));
+    }
+
+    public void incAcc (View v) {
+        imgA.blobAccuracy /= 1.1;
+        imgA.edgeAccuracy -= 50000;
+    }
+
+    public void decAcc (View v) {
+        imgA.blobAccuracy *= 1.1;
+        imgA.edgeAccuracy += 50000;
     }
 
     public int averageColour(Bitmap bit) {
         long greenF = 0;
         long redF = 0;
+        System.out.println(colour);
         long blueF = 0;
         int numPixels = 0;
         int[] pixels = new int [bit.getWidth() * bit.getHeight()];
@@ -87,6 +104,62 @@ public class MainActivity extends ActionBarActivity {
         colour.setBackgroundColor(Color.rgb((int) redF, (int) greenF, (int) blueF));
 
         return Color.rgb((int) redF, (int) greenF, (int) blueF);
+    }
+
+    public int closeToColour (int colour) {
+
+        int closestColour;
+        int difference;
+
+        difference = Math.abs(Color.BLACK - colour);
+        closestColour = Color.BLACK;
+
+        if (Math.abs(Color.BLUE - colour) < difference) {
+            closestColour = Color.BLUE;
+            difference = Math.abs(Color.BLUE - colour);
+        }
+
+        if (Math.abs(Color.RED - colour) < difference) {
+            closestColour = Color.RED;
+            difference = Math.abs(Color.RED - colour);
+        }
+
+        if (Math.abs(Color.DKGRAY - colour) < difference) {
+            closestColour = Color.DKGRAY;
+            difference = Math.abs(Color.DKGRAY - colour);
+        }
+
+        if (Math.abs(Color.YELLOW - colour) < difference) {
+            closestColour = Color.YELLOW;
+            difference = Math.abs(Color.YELLOW - colour);
+        }
+
+        if (Math.abs(Color.LTGRAY - colour) < difference) {
+            closestColour = Color.LTGRAY;
+            difference = Math.abs(Color.LTGRAY - colour);
+        }
+
+        if (Math.abs(Color.MAGENTA - colour) < difference) {
+            closestColour = Color.MAGENTA;
+            difference = Math.abs(Color.MAGENTA - colour);
+        }
+
+        if (Math.abs(Color.WHITE - colour) < difference) {
+            closestColour = Color.WHITE;
+            difference = Math.abs(Color.WHITE - colour);
+        }
+
+        if (Math.abs(Color.CYAN - colour) < difference) {
+            closestColour = Color.CYAN;
+            difference = Math.abs(Color.CYAN - colour);
+        }
+
+        if (Math.abs(Color.GREEN - colour) < difference) {
+            closestColour = Color.GREEN;
+            difference = Math.abs(Color.GREEN - colour);
+        }
+
+        return closestColour;
     }
 
     public String closeToColour (long colour) {
@@ -144,7 +217,6 @@ public class MainActivity extends ActionBarActivity {
 
         return closestColour;
     }
-
 
 
 }
