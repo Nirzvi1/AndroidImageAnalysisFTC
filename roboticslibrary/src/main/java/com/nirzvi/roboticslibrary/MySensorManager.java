@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 /**
  * Created by Nirzvi on 2015-05-22.
  */
-public class MySensorManager extends OpMode {
+public class MySensorManager {
 
     public final static int ACCEL = 151432;
     public final static int MAG = 38294;
@@ -29,6 +29,10 @@ public class MySensorManager extends OpMode {
     public final static int TEMP = 4237413;
     public final static int PROX = 4321234;
     public final static int LINEAR_ACC = 302492;
+
+    public final static int AZIMUTH = -123144;
+    public final static int PITCH = 432245;
+    public final static int ROLL = 321445;
 
 
     int count = 0;
@@ -54,7 +58,7 @@ public class MySensorManager extends OpMode {
         sm.getOrientation(firstFloat, secondFloat);
     }
 
-    public float[] getAngles (String accelName, String magName) {
+    public float getAngles (String accelName, String magName, int axis) {
         float[] rotMatrix = new float[9];
         float[] incline = new float[9];
         float[] orientMatrix = new float[3];
@@ -62,7 +66,21 @@ public class MySensorManager extends OpMode {
         getRotation(rotMatrix, incline, getValues(accelName), getValues(magName));
         getOrientation(rotMatrix, orientMatrix);
 
-        return orientMatrix;
+        if (axis == AZIMUTH)
+            axis = 0;
+        else if (axis == PITCH)
+            axis = 1;
+        else if (axis == ROLL)
+            axis = 2;
+
+        if (orientMatrix[axis] < 0) {
+            orientMatrix[axis] = (float) (Math.PI - Math.abs(orientMatrix[axis]));
+            orientMatrix[axis] += Math.PI;
+        }
+
+        orientMatrix[axis] = (float) Math.toDegrees(orientMatrix[axis]);
+
+        return orientMatrix[axis];
     }
 
     public void addSensor (int sensor, String name) {
@@ -132,65 +150,6 @@ public class MySensorManager extends OpMode {
         }
 
         return null;
-    }
-
-
-    public CompassSensor createCompass (String name) {
-        CompassSensor compass = hardwareMap.compassSensor.get(name);
-
-        return compass;
-    }
-
-    public AccelerationSensor createAcc (String name) {
-        AccelerationSensor acc = hardwareMap.accelerationSensor.get(name);
-
-        return acc;
-    }
-
-    public GyroSensor createGyro (String name) {
-        GyroSensor gyro = hardwareMap.gyroSensor.get(name);
-
-        return gyro;
-    }
-
-    public LightSensor createLight (String name) {
-        LightSensor light = hardwareMap.lightSensor.get(name);
-
-        return light;
-    }
-
-    public IrSeekerSensor createIR (String name) {
-        IrSeekerSensor irSeeker = hardwareMap.irSeekerSensor.get(name);
-
-        return irSeeker;
-    }
-
-    public UltrasonicSensor createSonic (String name) {
-        UltrasonicSensor sonic = hardwareMap.ultrasonicSensor.get(name);
-
-        return sonic;
-    }
-
-    public VoltageSensor createVolt (String name) {
-        VoltageSensor volt = hardwareMap.voltageSensor.get(name);
-
-        return volt;
-    }
-
-
-    @Override
-    public void start() {
-
-    }
-
-    @Override
-    public void loop() {
-
-    }
-
-    @Override
-    public void stop() {
-
     }
 }
 

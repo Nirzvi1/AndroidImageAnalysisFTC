@@ -7,16 +7,6 @@
     android:id="@+id/bg"
     tools:context="com.nirzvi.roboticsproject.MainActivity">
 
-
-    <TextureView
-        android:layout_width="300dp"
-        android:layout_height="200dp"
-        android:id="@+id/textureView"
-        android:layout_below="@+id/text"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="54dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -93,5 +83,16 @@
         android:layout_toRightOf="@+id/button4"
         android:layout_toEndOf="@+id/button4"
         android:onClick="getClosest" />
+
+    <TextureView
+        android:layout_width="250dp"
+        android:layout_height="150dp"
+        android:id="@+id/textureView"
+        android:layout_below="@+id/text"
+        android:layout_toRightOf="@+id/text"
+        android:layout_toEndOf="@+id/text"
+        android:translationZ="-10dp"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false" />
 
 </RelativeLayout>

@@ -26,7 +26,12 @@ import java.util.Random;
 public class ImageAnalysis {
 
     public double blobAccuracy = 2.2;
+
     public double edgeAccuracy = 500000;
+    public int rayIntensity = 50;
+    public int numCenterPoints = 9;
+    public int borderLimit = 1;
+    public int switchLimit = 1;
 
     public Bitmap getEdges (Bitmap bit) {
 
@@ -89,11 +94,7 @@ public class ImageAnalysis {
 
     public int closeToColour (int colour) {
 
-        int closestColour;
-
-        //Log.i("First Colour", "" + colour);
-
-        closestColour = Color.argb(255, Color.red(colour) - (int) (Color.red(colour) % (255 / blobAccuracy)),
+        int closestColour = Color.argb(255, Color.red(colour) - (int) (Color.red(colour) % (255 / blobAccuracy)),
                 Color.green(colour) - (int) (Color.green(colour) % (255 / blobAccuracy)),
                 Color.blue(colour) - (int) (Color.blue(colour) % (255 / blobAccuracy)));
 
@@ -125,8 +126,16 @@ public class ImageAnalysis {
 
         bit.getPixels(pixels, 0, bit.getWidth(), 0, 0, bit.getWidth(), bit.getHeight());
 
-        for (int i = 1; i < pixels.length; i++) {
-            if (Math.abs(pixels[i] - pixels[i - 1]) > edgeAccuracy) {
+        for (int i = 5; i < pixels.length; i++) {
+            if ((i % bit.getWidth() > 1 && i % bit.getWidth() < bit.getWidth() - 2 && Math.abs(pixels[i - 2] - pixels[i]) > edgeAccuracy
+                    && Math.abs(pixels[i + 1] - pixels[i - 2]) > edgeAccuracy
+                    && Math.abs(pixels[i] - pixels[i - 1]) > edgeAccuracy
+                    && Math.abs(pixels[i - 1] - pixels[i + 1]) > edgeAccuracy)) {
+                x = i % bit.getWidth();
+                y = i / bit.getWidth();
+                can.drawRect(x, y, x + 1, y + 1, colourPaint);
+            } else if (i % bit.getWidth() == 0 || i % bit.getWidth() == bit.getWidth() - 1
+                    || i / bit.getWidth() == 0 || i / bit.getWidth() == bit.getHeight() - 1) {
                 x = i % bit.getWidth();
                 y = i / bit.getWidth();
                 can.drawRect(x, y, x + 1, y + 1, colourPaint);
@@ -147,8 +156,11 @@ public class ImageAnalysis {
             pixels[i] = storePixels[newCoord];
         }
 
-        for (int i = 1; i < pixels.length; i++) {
-            if (Math.abs(pixels[i] - pixels[i - 1]) > edgeAccuracy) {
+        for (int i = 5; i < pixels.length; i++) {
+            if ((i % bit.getWidth() > 1 && i % bit.getWidth() < bit.getWidth() - 2 && Math.abs(pixels[i - 2] - pixels[i]) > edgeAccuracy
+                    && Math.abs(pixels[i + 1] - pixels[i - 2]) > edgeAccuracy
+                    && Math.abs(pixels[i] - pixels[i - 1]) > edgeAccuracy
+                    && Math.abs(pixels[i - 1] - pixels[i + 1]) > edgeAccuracy)) {
                 y = i % bitWidth;
                 x = i / bitWidth;
                 can.drawLine(x, y, x + 1, y + 1, colourPaint);
@@ -545,108 +557,122 @@ public class ImageAnalysis {
         int[] pixels = new int[imageHeight * imageWidth];
         int[] pixStore = new int[pixels.length];
         int[] newPixels = new int[pixels.length];
-        int radius = 0;
+        int[] newEdgePixels = new int[pixels.length];
+        int[] pixRadii = new int[pixels.length];
+        int[] indexes = new int[pixels.length];
+        int[] label = new int[pixels.length];
+        int radianCount = 0;
+        int radius = 1;
         int x;
         int y;
+        double tempX;
+        double tempY;
         int center = pixels.length / 2 + (imageWidth / 2);
-        double radians = 0;
-        int stageInCycle = 0;
-        int cycleNum = 1;
-        boolean doNotUse = false;
+        double radians;
+        boolean doNotUse;
         int newLabel = 1;
-        int[] label = new int[pixels.length];
-        int[] pixRadii = new int[pixels.length];
+        double incRad = Math.PI / (2 * rayIntensity);
+        int[][] allRadii = new int[1000][1000];
+        int[] pixRadCounts = new int[pixels.length];
 
         bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
 
-        for (int i = 0; i < newPixels.length; i++) {
-            pixStore[i] = -1;
-        }
+//        for (int i = 0; i < newPixels.length; i++) {
+//            pixStore[i] = -1;
+//        }
 
         newPixels[0] = pixels[center];
 
-        radius++;
+        radians = incRad;
 
-        radians = Math.PI / 2 * radius;
-
-        cycleNum = (int) (2 * Math.PI / radians);
-
-        stageInCycle = 0;
+        tempX = Math.cos(radians);
+        tempY = Math.sin(radians);
 
         for (int i = 1; i < pixels.length; i++) {
 
-            stageInCycle++;
+            x = (int) (tempX * radius);
+            y = (int) (tempY * radius);
 
             pixRadii[i] = radius;
 
-            x = (int) (radius * Math.cos(radians * stageInCycle));
-            y = (int) (radius * Math.sin(radians * stageInCycle));
+            radius++;
 
             doNotUse = false;
-
-            if (Math.abs(x) > (imageWidth / 2) - 1)
+            if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
                 doNotUse = true;
-            else if (Math.abs(y) > (imageHeight / 2) - 1)
+            else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
                 doNotUse = true;
 
             if (!doNotUse) {
                 newPixels[i] = pixels[center + x + (y * imageWidth)];
-            }
+                allRadii[radius][radianCount] = i;
+                pixRadCounts[i] = radianCount;
+            } else {
+                radianCount++;
+                radians += incRad;
 
-            if (stageInCycle > cycleNum) {
-                radius++;
+                radius = 1;
 
-                radians = Math.PI / (2 * radius);
+                tempX = Math.cos(radians);
+                tempY = Math.sin(radians);
 
-                cycleNum = (int) radius * 4;
-
-                stageInCycle = 0;
             }
 
         }
 
-        pixels[center] = newPixels[0];
+        for (int i = 1; i < newPixels.length; i++) {
+            if (Math.abs(newPixels[i] - newPixels[i - 1]) > edgeAccuracy) {
+                newEdgePixels[i] = Color.BLACK;
+            } else {
+                newEdgePixels[i] = Color.WHITE;
+            }
+        }
+
+        label[0] = 1;
+
+        Arrays.fill(pixStore, -1);
+
+        pixStore[center] = newPixels[0];
+
+        radians = incRad;
 
         radius = 1;
 
-        radians = Math.PI / 2 * radius;
-
-        cycleNum = (int) (2 * Math.PI / radians);
-
-        stageInCycle = 0;
+        tempX = Math.cos(radians);
+        tempY = Math.sin(radians);
 
         for (int i = 1; i < pixels.length; i++) {
 
-            stageInCycle++;
+            x = (int) (tempX * radius);
+            y = (int) (tempY * radius);
 
-            x = (int) (radius * Math.cos(radians * stageInCycle));
-            y = (int) (radius * Math.sin(radians * stageInCycle));
+            radius++;
 
             doNotUse = false;
-
-            if (Math.abs(x) > (imageWidth / 2) - 1)
+            if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
                 doNotUse = true;
-            else if (Math.abs(y) > (imageHeight / 2) - 1)
+            else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
                 doNotUse = true;
 
-            if (!doNotUse)
-                pixStore[center + x + (y * imageWidth)] = newPixels[i];
+            if (!doNotUse) {
+                pixStore[center + x + (y * imageWidth)] = newEdgePixels[i];
+            } else {
+                radians += incRad;
 
-            if (stageInCycle > cycleNum) {
-                radius++;
+                radius = 1;
 
-                radians = Math.PI / (2 * radius);
+                tempX = Math.cos(radians);
+                tempY = Math.sin(radians);
 
-                cycleNum = (int) (2 * Math.PI / radians);
-
-                stageInCycle = 0;
             }
 
         }
+
 
         bit = Bitmap.createBitmap(pixStore, imageWidth, imageHeight, Bitmap.Config.ARGB_8888);
 
         return bit;
+
 
     }
 
@@ -661,162 +687,235 @@ public class ImageAnalysis {
         int radius = 0;
         int x;
         int y;
-        int center = pixels.length / 2 + (imageWidth / 2);
+        int center = pixels.length / 2 + 3 * (imageWidth / 4);
         double radians = 0;
         int stageInCycle = 0;
         int cycleNum = 1;
         boolean doNotUse = false;
         int newLabel = 1;
+        int borderCount = 0;
         int[] label = new int[pixels.length];
         int[] pixRadii = new int[pixels.length];
+        int[] centerPoints = {imageWidth / 4 + (imageWidth * imageHeight / 4), 3 * imageWidth / 4 + (imageWidth * imageHeight / 4),
+                imageWidth / 4 + (3 * imageWidth * imageHeight / 4),  3 * imageWidth / 4 + (3 * imageWidth * imageHeight / 4)};
 
         bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
 
         for (int i = 0; i < newPixels.length; i++) {
-            pixStore[i] = -1;
+            pixStore[i] = Color.BLACK;
         }
 
-        newPixels[0] = pixels[center];
+        for (int j = 0; j < 4; j++) {
+            center = centerPoints[j];
 
-        radius++;
+            Arrays.fill(newPixels, 0);
+            radius = 0;
+            borderCount = 0;
 
-        radians = Math.PI / 2 * radius;
+            newPixels[0] = pixels[center];
 
-        cycleNum = (int) (2 * Math.PI / radians);
+            radius++;
 
-        stageInCycle = 0;
+            radians = Math.PI / 2 * radius;
 
-        for (int i = 1; i < pixels.length; i++) {
+            cycleNum = (int) (2 * Math.PI / radians);
 
-            stageInCycle++;
+            stageInCycle = 0;
 
-            pixRadii[i] = radius;
+            for (int i = 1; i < 50000; i++) {
 
-            x = (int) (radius * Math.cos(radians * stageInCycle));
-            y = (int) (radius * Math.sin(radians * stageInCycle));
+                pixRadii[i] = radius;
 
-            doNotUse = false;
+                x = (int) (radius * Math.cos((radians * stageInCycle)));
+                y = (int) (radius * Math.sin((radians * stageInCycle)));
+                stageInCycle++;
 
-            if (Math.abs(x) > (imageWidth / 2) - 1)
-                doNotUse = true;
-            else if (Math.abs(y) > (imageHeight / 2) - 1)
-                doNotUse = true;
+                doNotUse = false;
 
-            if (!doNotUse) {
-                newPixels[i] = pixels[center + x + (y * imageWidth)];
+                if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+                    doNotUse = true;
+                else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+                    doNotUse = true;
+                else if (pixels[center + x + (y * imageWidth)] == Color.BLACK) {
+                    borderCount++;
+                }
+
+                if (borderCount >= 500)
+                    break;
+
+                //            if (Math.abs(x) > imageWidth / 2 - 1
+                //                    || Math.abs(y) > imageHeight / 2 - 1)
+                //                doNotUse = true;
+
+                if (!doNotUse) {
+                    newPixels[i] = pixels[center + x + (y * imageWidth)];
+                }
+
+
+                if (stageInCycle >= cycleNum) {
+                    borderCount = 0;
+
+                    radius++;
+
+                    radians = Math.PI / (2 * radius);
+
+                    cycleNum = (int) radius * 4;
+
+                    stageInCycle = 0;
+                }
+
             }
 
-            if (stageInCycle > cycleNum) {
+            pixels[center] = newPixels[0];
+
+            radius = 1;
+
+            radians = Math.PI / 2 * radius;
+
+            cycleNum = radius * 4;
+
+            stageInCycle = 0;
+
+            for (int i = 1; i < pixels.length; i++) {
+
+                x = (int) (radius * Math.cos((radians * stageInCycle) - Math.PI / 38));
+                y = (int) (radius * Math.sin((radians * stageInCycle) - Math.PI / 38));
+
+                stageInCycle++;
+
+                doNotUse = false;
+
+                if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+                    doNotUse = true;
+                else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+                    doNotUse = true;
+
+                //            if (Math.abs(x) > imageWidth / 2 - 1
+                //                    || Math.abs(y) > imageHeight / 2 - 1)
+                //                doNotUse = true;
+
+                if (!doNotUse && newPixels[i] != 0)
+                    pixStore[center + x + (y * imageWidth)] = newPixels[i];
+
+                if (stageInCycle > cycleNum) {
+                    radius++;
+
+                    radians = Math.PI / (2 * radius);
+
+                    cycleNum = (int) (2 * Math.PI / radians);
+
+                    stageInCycle = 0;
+                }
+
+            }
+
+        }
+
+        bit = Bitmap.createBitmap(pixStore, imageWidth, imageHeight, Bitmap.Config.ARGB_8888);
+
+        return bit;
+
+    }
+
+    public Bitmap multiCircle (Bitmap bit) {
+        int imageWidth = bit.getWidth();
+        int imageHeight = bit.getHeight();
+        int[] pixels = new int[imageHeight * imageWidth];
+        int[] pixStore = new int[pixels.length];
+        int radius = 1;
+        int x;
+        int y;
+        double tempX;
+        double tempY;
+        int center = pixels.length / 2 + (imageWidth / 2);
+        double radians;
+        boolean doNotUse;
+        double incRad = Math.PI / (2 * rayIntensity);
+        int[] centerPoints = new int[numCenterPoints * numCenterPoints];
+        int[] colours = new int[centerPoints.length];
+        int centerCounter = 0;
+        int borderCount = 0;
+        int alreadySwitched;
+        int[] blobPixels;
+
+        bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
+
+        for (int j = 0; j < numCenterPoints; j++) {
+            for (int i = 0; i < numCenterPoints; i++) {
+                centerPoints[centerCounter] = pixels.length / 2 + ((i - numCenterPoints / 2) * imageWidth / numCenterPoints) + ((j - numCenterPoints / 2) * imageWidth * imageHeight / numCenterPoints);
+                centerCounter++;
+            }
+        }
+
+        Arrays.fill(pixStore, -1);
+
+        for (int j = 0; j < centerPoints.length; j++) {
+            center = centerPoints[j];
+            colours[j] = (j + 1) * -4500 - 1;
+            blobPixels = new int[pixels.length];
+            alreadySwitched = 0;
+
+            if (pixStore[j] != -1) {
+                colours[j] = pixStore[j];
+            }
+
+            radians = incRad;
+
+            tempX = Math.cos(radians);
+            tempY = Math.sin(radians);
+
+            for (int i = 1; i < pixels.length; i++) {
+
+                x = (int) (tempX * radius);
+                y = (int) (tempY * radius);
+
                 radius++;
 
-                radians = Math.PI / (2 * radius);
+                doNotUse = false;
+                if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+                    doNotUse = true;
+                else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+                    doNotUse = true;
+                else if (pixels[center + x + (y * imageWidth)] == Color.BLACK)
+                    borderCount++;
+                else if (pixStore[center + x + (y * imageWidth)] != -1
+                        && pixStore[center + x + (y * imageWidth)] != colours[j]) {
+                    doNotUse = true;
+                    if (alreadySwitched < switchLimit) {
+                        colours[j] = pixStore[center + x + (y * imageWidth)];
+                    }
 
-                cycleNum = (int) radius * 4;
+                    alreadySwitched++;
+                }
 
-                stageInCycle = 0;
-            }
-
-        }
-
-        label[0] = 1;
-
-        for (int i = 0; i < pixels.length; i++) {
-
-            if (newPixels[i] != Color.BLACK) {
-                cycleNum = pixRadii[i] * 4;
-
-                if (i > 0 && newPixels[i - 1] != Color.BLACK) {
-                    label[i] = label[i - 1];
-                } else if (pixRadii[i] > 1 && newPixels[i - cycleNum + 2] != Color.BLACK) {
-                    label[i] = label[i - cycleNum + 2];
-                } else if (i > cycleNum + 1 && newPixels[i - cycleNum + 1] != Color.BLACK) {
-                    label[i] = label[i - cycleNum + 1];
-                } else if (i > cycleNum + 3 && newPixels[i - cycleNum + 3] != Color.BLACK) {
-                    label[i] = label[i - cycleNum + 3];
-                } else if (i > cycleNum && newPixels[i - cycleNum] != Color.BLACK) {
-                    label[i] = label[i - cycleNum];
-                } else if (i > 1 && newPixels[i - 2] != Color.BLACK) {
-                    label[i] = label[i - 2];
-                } else if (i > 2 && newPixels[i - 3] != Color.BLACK) {
-                    label[i] = label[i - 3];
-                } else if (i > cycleNum + 4 && newPixels[i - cycleNum + 4] != Color.BLACK) {
-                    label[i] = label[i - cycleNum + 4];
+                if (!doNotUse && borderCount < borderLimit) {
+                    blobPixels[i] = center + x + (y * imageWidth);
                 } else {
-                    label[i] = ++newLabel;
+                    borderCount = 0;
+                    radians += incRad;
+
+                    radius = 1;
+
+                    tempX = Math.cos(radians);
+                    tempY = Math.sin(radians);
                 }
+
+                if (radians > 2 * Math.PI) {
+                    blobPixels[i + 1] = -2;
+                    break;
+                }
+
             }
 
-        }
+            pixStore[center] = colours[j];
 
-        for (int i = 0; i < newPixels.length; i++) {
-            switchPixStore[i] = newPixels[i];
-            switchLabelStore[i] = label[i];
-        }
+            for (int i = 0; i < blobPixels.length; i++) {
 
-        for (int i = 0; i < newPixels.length; i++) {
-            newPixels[i] = switchPixStore[newPixels.length - 1 - i];
-            label[i] = switchLabelStore[newPixels.length - 1 - i];
-        }
+                if (blobPixels[i] == -2)
+                    break;
 
-        for (int i = 0; i < pixels.length; i++) {
+                pixStore[blobPixels[i]] = colours[j];
 
-            if (newPixels[i] != Color.BLACK) {
-                cycleNum = pixRadii[i] * 4;
-
-                if (i < newPixels.length - 1 && newPixels[i + 1] != Color.BLACK) {
-                    label[i] = label[i + 1];
-                }
-            }
-
-        }
-
-        for (int i = 0; i < newPixels.length; i++) {
-            switchPixStore[i] = newPixels[i];
-            switchLabelStore[i] = label[i];
-        }
-
-        for (int i = 0; i < newPixels.length; i++) {
-            newPixels[i] = switchPixStore[newPixels.length - 1 - i];
-            label[i] = switchLabelStore[newPixels.length - 1 - i];
-        }
-
-        pixels[center] = newPixels[0];
-
-        radius = 1;
-
-        radians = Math.PI / 2 * radius;
-
-        cycleNum = (int) (2 * Math.PI / radians);
-
-        stageInCycle = 0;
-
-        for (int i = 1; i < pixels.length; i++) {
-
-            stageInCycle++;
-
-            x = (int) (radius * Math.cos(radians * stageInCycle));
-            y = (int) (radius * Math.sin(radians * stageInCycle));
-
-            doNotUse = false;
-
-            if (Math.abs(x) > (imageWidth / 2) - 1)
-                doNotUse = true;
-            else if (Math.abs(y) > (imageHeight / 2) - 1)
-                doNotUse = true;
-
-            //Log.i("Info", "Radius: " + radius + " CycleNum: " + cycleNum + "Stage: " + stageInCycle + " Radians: " + radians);
-
-            if (!doNotUse)
-                pixStore[center + x + (y * imageWidth)] = (label[i] * -4500 - 1);
-
-            if (stageInCycle > cycleNum) {
-                radius++;
-
-                radians = Math.PI / (2 * radius);
-
-                cycleNum = (int) (2 * Math.PI / radians);
-
-                stageInCycle = 0;
             }
 
         }
