@@ -27,9 +27,9 @@ public class ImageAnalysis {
 
     public double blobAccuracy = 2.2;
 
-    public double edgeAccuracy = 500000;
+    public double edgeAccuracy = 10;
     public int rayIntensity = 50;
-    public int numCenterPoints = 9;
+    public int numCentrePoints = 9;
     public int borderLimit = 1;
     public int switchLimit = 1;
 
@@ -126,11 +126,10 @@ public class ImageAnalysis {
 
         bit.getPixels(pixels, 0, bit.getWidth(), 0, 0, bit.getWidth(), bit.getHeight());
 
-        for (int i = 5; i < pixels.length; i++) {
-            if ((i % bit.getWidth() > 1 && i % bit.getWidth() < bit.getWidth() - 2 && Math.abs(pixels[i - 2] - pixels[i]) > edgeAccuracy
-                    && Math.abs(pixels[i + 1] - pixels[i - 2]) > edgeAccuracy
-                    && Math.abs(pixels[i] - pixels[i - 1]) > edgeAccuracy
-                    && Math.abs(pixels[i - 1] - pixels[i + 1]) > edgeAccuracy)) {
+        for (int i = 1; i < pixels.length; i++) {
+            if ((i % bit.getWidth() > 0 && (Math.abs(Color.red(pixels[i - 1]) - Color.red(pixels[i])) > edgeAccuracy
+                || Math.abs(Color.green(pixels[i - 1]) - Color.green(pixels[i])) > edgeAccuracy
+                || Math.abs(Color.blue(pixels[i - 1]) - Color.blue(pixels[i])) > edgeAccuracy))) {
                 x = i % bit.getWidth();
                 y = i / bit.getWidth();
                 can.drawRect(x, y, x + 1, y + 1, colourPaint);
@@ -156,11 +155,10 @@ public class ImageAnalysis {
             pixels[i] = storePixels[newCoord];
         }
 
-        for (int i = 5; i < pixels.length; i++) {
-            if ((i % bit.getWidth() > 1 && i % bit.getWidth() < bit.getWidth() - 2 && Math.abs(pixels[i - 2] - pixels[i]) > edgeAccuracy
-                    && Math.abs(pixels[i + 1] - pixels[i - 2]) > edgeAccuracy
-                    && Math.abs(pixels[i] - pixels[i - 1]) > edgeAccuracy
-                    && Math.abs(pixels[i - 1] - pixels[i + 1]) > edgeAccuracy)) {
+        for (int i = 1; i < pixels.length; i++) {
+            if ((i % bit.getWidth() > 0 && (Math.abs(Color.red(pixels[i - 1]) - Color.red(pixels[i])) > edgeAccuracy
+                    || Math.abs(Color.green(pixels[i - 1]) - Color.green(pixels[i])) > edgeAccuracy
+                    || Math.abs(Color.blue(pixels[i - 1]) - Color.blue(pixels[i])) > edgeAccuracy))) {
                 y = i % bitWidth;
                 x = i / bitWidth;
                 can.drawLine(x, y, x + 1, y + 1, colourPaint);
@@ -524,7 +522,7 @@ public class ImageAnalysis {
 
             centres[i] = getCentre(colourCoords.get(blobRanks[i]), imageWidth);
             blobRanks[i] = colours.get(blobRanks[i]);
-            Log.i("Colours", " Colour: " + (blobRanks[i] * -4500 - 1) + "Center: " + centres[i]);
+            Log.i("Colours", " Colour: " + (blobRanks[i] * -4500 - 1) + "Centre: " + centres[i]);
 
         }
 
@@ -567,7 +565,7 @@ public class ImageAnalysis {
         int y;
         double tempX;
         double tempY;
-        int center = pixels.length / 2 + (imageWidth / 2);
+        int centre = pixels.length / 2 + (imageWidth / 2);
         double radians;
         boolean doNotUse;
         int newLabel = 1;
@@ -581,7 +579,7 @@ public class ImageAnalysis {
 //            pixStore[i] = -1;
 //        }
 
-        newPixels[0] = pixels[center];
+        newPixels[0] = pixels[centre];
 
         radians = incRad;
 
@@ -598,13 +596,13 @@ public class ImageAnalysis {
             radius++;
 
             doNotUse = false;
-            if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+            if ((centre % imageWidth) + x < 0 || (centre % imageWidth) + x > imageWidth - 1)
                 doNotUse = true;
-            else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+            else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
                 doNotUse = true;
 
             if (!doNotUse) {
-                newPixels[i] = pixels[center + x + (y * imageWidth)];
+                newPixels[i] = pixels[centre + x + (y * imageWidth)];
                 allRadii[radius][radianCount] = i;
                 pixRadCounts[i] = radianCount;
             } else {
@@ -632,7 +630,7 @@ public class ImageAnalysis {
 
         Arrays.fill(pixStore, -1);
 
-        pixStore[center] = newPixels[0];
+        pixStore[centre] = newPixels[0];
 
         radians = incRad;
 
@@ -649,13 +647,13 @@ public class ImageAnalysis {
             radius++;
 
             doNotUse = false;
-            if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+            if ((centre % imageWidth) + x < 0 || (centre % imageWidth) + x > imageWidth - 1)
                 doNotUse = true;
-            else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+            else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
                 doNotUse = true;
 
             if (!doNotUse) {
-                pixStore[center + x + (y * imageWidth)] = newEdgePixels[i];
+                pixStore[centre + x + (y * imageWidth)] = newEdgePixels[i];
             } else {
                 radians += incRad;
 
@@ -687,7 +685,7 @@ public class ImageAnalysis {
         int radius = 0;
         int x;
         int y;
-        int center = pixels.length / 2 + 3 * (imageWidth / 4);
+        int centre = pixels.length / 2 + 3 * (imageWidth / 4);
         double radians = 0;
         int stageInCycle = 0;
         int cycleNum = 1;
@@ -696,7 +694,7 @@ public class ImageAnalysis {
         int borderCount = 0;
         int[] label = new int[pixels.length];
         int[] pixRadii = new int[pixels.length];
-        int[] centerPoints = {imageWidth / 4 + (imageWidth * imageHeight / 4), 3 * imageWidth / 4 + (imageWidth * imageHeight / 4),
+        int[] centrePoints = {imageWidth / 4 + (imageWidth * imageHeight / 4), 3 * imageWidth / 4 + (imageWidth * imageHeight / 4),
                 imageWidth / 4 + (3 * imageWidth * imageHeight / 4),  3 * imageWidth / 4 + (3 * imageWidth * imageHeight / 4)};
 
         bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
@@ -706,13 +704,13 @@ public class ImageAnalysis {
         }
 
         for (int j = 0; j < 4; j++) {
-            center = centerPoints[j];
+            centre = centrePoints[j];
 
             Arrays.fill(newPixels, 0);
             radius = 0;
             borderCount = 0;
 
-            newPixels[0] = pixels[center];
+            newPixels[0] = pixels[centre];
 
             radius++;
 
@@ -732,11 +730,11 @@ public class ImageAnalysis {
 
                 doNotUse = false;
 
-                if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+                if ((centre % imageWidth) + x < 0 || (centre % imageWidth) + x > imageWidth - 1)
                     doNotUse = true;
-                else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+                else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
                     doNotUse = true;
-                else if (pixels[center + x + (y * imageWidth)] == Color.BLACK) {
+                else if (pixels[centre + x + (y * imageWidth)] == Color.BLACK) {
                     borderCount++;
                 }
 
@@ -748,7 +746,7 @@ public class ImageAnalysis {
                 //                doNotUse = true;
 
                 if (!doNotUse) {
-                    newPixels[i] = pixels[center + x + (y * imageWidth)];
+                    newPixels[i] = pixels[centre + x + (y * imageWidth)];
                 }
 
 
@@ -766,7 +764,7 @@ public class ImageAnalysis {
 
             }
 
-            pixels[center] = newPixels[0];
+            pixels[centre] = newPixels[0];
 
             radius = 1;
 
@@ -785,9 +783,9 @@ public class ImageAnalysis {
 
                 doNotUse = false;
 
-                if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+                if ((centre % imageWidth) + x < 0 || (centre % imageWidth) + x > imageWidth - 1)
                     doNotUse = true;
-                else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+                else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
                     doNotUse = true;
 
                 //            if (Math.abs(x) > imageWidth / 2 - 1
@@ -795,7 +793,7 @@ public class ImageAnalysis {
                 //                doNotUse = true;
 
                 if (!doNotUse && newPixels[i] != 0)
-                    pixStore[center + x + (y * imageWidth)] = newPixels[i];
+                    pixStore[centre + x + (y * imageWidth)] = newPixels[i];
 
                 if (stageInCycle > cycleNum) {
                     radius++;
@@ -827,35 +825,35 @@ public class ImageAnalysis {
         int y;
         double tempX;
         double tempY;
-        int center = pixels.length / 2 + (imageWidth / 2);
+        int centre = pixels.length / 2 + (imageWidth / 2);
         double radians;
         boolean doNotUse;
         double incRad = Math.PI / (2 * rayIntensity);
-        int[] centerPoints = new int[numCenterPoints * numCenterPoints];
-        int[] colours = new int[centerPoints.length];
-        int centerCounter = 0;
+        int[] centrePoints = new int[numCentrePoints * numCentrePoints];
+        int[] colours = new int[centrePoints.length];
+        int centreCounter = 0;
         int borderCount = 0;
         int alreadySwitched;
         int[] blobPixels;
 
         bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
 
-        for (int j = 0; j < numCenterPoints; j++) {
-            for (int i = 0; i < numCenterPoints; i++) {
-                centerPoints[centerCounter] = pixels.length / 2 + ((i - numCenterPoints / 2) * imageWidth / numCenterPoints) + ((j - numCenterPoints / 2) * imageWidth * imageHeight / numCenterPoints);
-                centerCounter++;
+        for (int j = 0; j < numCentrePoints; j++) {
+            for (int i = 0; i < numCentrePoints; i++) {
+                centrePoints[centreCounter] = pixels.length / 2 + ((i - numCentrePoints / 2) * imageWidth / numCentrePoints) + ((j - numCentrePoints / 2) * imageWidth * imageHeight / numCentrePoints);
+                centreCounter++;
             }
         }
 
         Arrays.fill(pixStore, -1);
 
-        for (int j = 0; j < centerPoints.length; j++) {
-            center = centerPoints[j];
+        for (int j = 0; j < centrePoints.length; j++) {
+            centre = centrePoints[j];
             colours[j] = (j + 1) * -4500 - 1;
             blobPixels = new int[pixels.length];
             alreadySwitched = 0;
 
-            if (pixStore[j] != -1) {
+            if (pixStore[centre] != -1) {
                 colours[j] = pixStore[j];
             }
 
@@ -872,24 +870,24 @@ public class ImageAnalysis {
                 radius++;
 
                 doNotUse = false;
-                if ((center % imageWidth) + x < 0 || (center % imageWidth) + x > imageWidth - 1)
+                if ((centre % imageWidth) + x < 0 || (centre % imageWidth) + x > imageWidth - 1)
                     doNotUse = true;
-                else if ((center / imageWidth) + y < 0 || (center / imageWidth) + y > imageHeight - 1)
+                else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
                     doNotUse = true;
-                else if (pixels[center + x + (y * imageWidth)] == Color.BLACK)
+                else if (pixels[centre + x + (y * imageWidth)] == Color.BLACK)
                     borderCount++;
-                else if (pixStore[center + x + (y * imageWidth)] != -1
-                        && pixStore[center + x + (y * imageWidth)] != colours[j]) {
+                else if (pixStore[centre + x + (y * imageWidth)] != -1
+                        && pixStore[centre + x + (y * imageWidth)] != colours[j]) {
                     doNotUse = true;
                     if (alreadySwitched < switchLimit) {
-                        colours[j] = pixStore[center + x + (y * imageWidth)];
+                        colours[j] = pixStore[centre + x + (y * imageWidth)];
                     }
 
                     alreadySwitched++;
                 }
 
                 if (!doNotUse && borderCount < borderLimit) {
-                    blobPixels[i] = center + x + (y * imageWidth);
+                    blobPixels[i] = centre + x + (y * imageWidth);
                 } else {
                     borderCount = 0;
                     radians += incRad;
@@ -907,7 +905,7 @@ public class ImageAnalysis {
 
             }
 
-            pixStore[center] = colours[j];
+            pixStore[centre] = colours[j];
 
             for (int i = 0; i < blobPixels.length; i++) {
 

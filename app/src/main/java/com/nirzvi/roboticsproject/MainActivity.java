@@ -82,11 +82,11 @@ public class MainActivity extends ActionBarActivity {
 
     public void incAcc (View v) {
         imgA.blobAccuracy /= 1.1;
-        imgA.edgeAccuracy -= 50000;
+        imgA.edgeAccuracy -= 2;
     }
 
     public void decAcc (View v) {
         imgA.blobAccuracy *= 1.1;
-        imgA.edgeAccuracy += 50000;
+        imgA.edgeAccuracy += 2;
     }
 }
