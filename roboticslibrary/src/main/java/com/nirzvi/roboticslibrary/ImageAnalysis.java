@@ -823,8 +823,8 @@ public class ImageAnalysis {
         int radius = 1;
         int x;
         int y;
-        double tempX;
-        double tempY;
+        double cosVal;
+        double sinVal;
         int centre = pixels.length / 2 + (imageWidth / 2);
         double radians;
         boolean doNotUse;
@@ -833,8 +833,11 @@ public class ImageAnalysis {
         int[] colours = new int[centrePoints.length];
         int centreCounter = 0;
         int borderCount = 0;
+        int storeCentre = 0;
         int alreadySwitched;
         int[] blobPixels;
+        boolean reflected;
+        boolean newCentre = false;
 
         bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
 
@@ -852,20 +855,23 @@ public class ImageAnalysis {
             colours[j] = (j + 1) * -4500 - 1;
             blobPixels = new int[pixels.length];
             alreadySwitched = 0;
+            reflected = false;
+            storeCentre = centrePoints[j];
 
             if (pixStore[centre] != -1) {
                 colours[j] = pixStore[j];
+                alreadySwitched++;
             }
 
             radians = incRad;
 
-            tempX = Math.cos(radians);
-            tempY = Math.sin(radians);
+            cosVal = Math.cos(radians);
+            sinVal = Math.sin(radians);
 
             for (int i = 1; i < pixels.length; i++) {
 
-                x = (int) (tempX * radius);
-                y = (int) (tempY * radius);
+                x = (int) (cosVal * radius);
+                y = (int) (sinVal * radius);
 
                 radius++;
 
@@ -874,9 +880,23 @@ public class ImageAnalysis {
                     doNotUse = true;
                 else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
                     doNotUse = true;
-                else if (pixels[centre + x + (y * imageWidth)] == Color.BLACK)
-                    borderCount++;
-                else if (pixStore[centre + x + (y * imageWidth)] != -1
+                else if (pixels[centre + x + (y * imageWidth)] == Color.BLACK) {
+                    if (!reflected) {
+
+                        cosVal = Math.cos(radians - 4 * Math.PI / 6);
+                        sinVal = Math.sin(radians - 4 * Math.PI / 6);
+
+                        radius = 1;
+
+                        centre = centre + x + (y * imageWidth);
+                        x = 0;
+                        y = 0;
+
+                        reflected = true;
+                            
+                    } else
+                        borderCount++;
+                } else if (pixStore[centre + x + (y * imageWidth)] != -1
                         && pixStore[centre + x + (y * imageWidth)] != colours[j]) {
                     doNotUse = true;
                     if (alreadySwitched < switchLimit) {
@@ -892,10 +912,13 @@ public class ImageAnalysis {
                     borderCount = 0;
                     radians += incRad;
 
+                    centre = storeCentre;
+                    reflected = false;
+
                     radius = 1;
 
-                    tempX = Math.cos(radians);
-                    tempY = Math.sin(radians);
+                    cosVal = Math.cos(radians);
+                    sinVal = Math.sin(radians);
                 }
 
                 if (radians > 2 * Math.PI) {
