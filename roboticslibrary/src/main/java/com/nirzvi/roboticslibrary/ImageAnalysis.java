@@ -25,13 +25,325 @@ import java.util.Random;
  */
 public class ImageAnalysis {
 
-    public double blobAccuracy = 2.2;
+    public double blobAccuracy = 4;
 
     public double edgeAccuracy = 10;
     public int rayIntensity = 50;
     public int numCentrePoints = 9;
     public int borderLimit = 1;
     public int switchLimit = 1;
+    public int reflectLimit = 1;
+
+    public int numOfBlobs = 100;
+
+    public void increaseBlur () {
+
+        switch (numOfBlobs) {
+
+            case 1: numOfBlobs = 2; break;
+            case 2: numOfBlobs = 4; break;
+            case 4: numOfBlobs = 5; break;
+            case 5: numOfBlobs = 10; break;
+            case 10: numOfBlobs = 20; break;
+            case 20: numOfBlobs = 25; break;
+            case 25: numOfBlobs = 50; break;
+            case 50: numOfBlobs = 100; break;
+            case 100: numOfBlobs = 125; break;
+            case 125: numOfBlobs = 250; break;
+            case 250: numOfBlobs = 500; break;
+
+        }
+
+    }
+
+    public void decreaseBlur () {
+
+        switch (numOfBlobs) {
+
+            case 2: numOfBlobs = 1; break;
+            case 4: numOfBlobs = 2; break;
+            case 5: numOfBlobs = 4; break;
+            case 10: numOfBlobs = 5; break;
+            case 20: numOfBlobs = 10; break;
+            case 25: numOfBlobs = 20; break;
+            case 50: numOfBlobs = 25; break;
+            case 100: numOfBlobs = 50; break;
+            case 125: numOfBlobs = 100; break;
+            case 250: numOfBlobs = 125; break;
+            case 500: numOfBlobs = 250; break;
+
+        }
+
+    }
+
+    public Bitmap chrome = null;
+
+    public void chromatize(int [] pixels, Bitmap bit){
+        int width = bit.getWidth();
+        int height = bit.getHeight();
+        int [] colorTable = new int [width * height];
+        int BLACK_THRESHOLD = 50;
+        bit.getPixels(colorTable, 0, width, 0, 0, width, height);
+        for(int i  = 0; i < pixels.length; i++){
+            double red = Color.red(pixels[i]);
+            double green = Color.green(pixels[i]);
+            double blue = Color.blue(pixels[i]);
+            if(red < BLACK_THRESHOLD && blue < BLACK_THRESHOLD && green < BLACK_THRESHOLD){
+                pixels[i] = Color.BLACK;
+                continue;
+            }
+            double cr = red / (red + green + blue);
+            double cg = green / (red + green + blue);
+            double cb = 1 - cr - cg;
+            //Log.d("colors", "R: " + cr + " G: " + cg);
+            if(cr > 0.7) cr = 0.7;
+            if(cg > 0.85) cg = 0.85;
+
+            int x = (int)(cr * (width - 1) / 0.7);
+            int y = (int)( cg * (height - 1) / 0.85);
+            //Log.d("index", "x " + x  + " y " + y);
+            pixels[i] = colorTable[x + y * width];
+        }
+    }
+
+    public Bitmap chrome(Bitmap img){
+        int[] pixels = new int [img.getWidth() * img.getHeight()];
+        img.getPixels(pixels, 0, img.getWidth(), 0 , 0, img.getWidth(), img.getHeight());
+        chromatize(pixels, chrome);
+        return Bitmap.createBitmap(pixels, img.getWidth(), img.getHeight(), Bitmap.Config.ARGB_8888);
+    }
+
+    public int averageColour(int[] pixels) {
+        long greenF = 0;
+        long redF = 0;
+        long blueF = 0;
+        int numPixels = 0;
+
+        for (int i = 0; i < pixels.length; i++) {
+            redF += Color.red(pixels[i]);
+            blueF += Color.blue(pixels[i]);
+            greenF += Color.green(pixels[i]);
+            numPixels++;
+        }
+
+        redF /= numPixels;
+        greenF /= numPixels;
+        blueF /= numPixels;
+
+        return Color.rgb((int) redF, (int) greenF, (int) blueF);
+    }
+
+    public Bitmap blurMethod (Bitmap bit, boolean colour) {
+
+        int imageWidth = bit.getWidth();
+        int imageHeight = bit.getHeight();
+        int[] tempPixels = new int[imageHeight * imageWidth];
+        int[] pixels = new int[numOfBlobs * numOfBlobs];
+        int[] pixCoords = new int[numOfBlobs * numOfBlobs];
+        int[] blobIndex = new int[tempPixels.length];
+        int[] storePix = new int[pixels.length];
+        List<Integer> blobs = new ArrayList<>();
+        int colourCount = 0;
+        int centreCount = 0;
+
+        bit.getPixels(tempPixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
+
+        for (int i = 0; i < numOfBlobs; i++) {
+            for (int j = 0; j < numOfBlobs; j++) {
+                pixCoords[centreCount] = (i * imageWidth / numOfBlobs) + (j * imageWidth * imageHeight / numOfBlobs);
+
+                int[] avgPix = new int [(imageWidth / numOfBlobs) * (imageHeight / numOfBlobs)];
+                int avgCount = 0;
+
+                for (int k = 0; k < imageWidth / numOfBlobs; k++) {
+                    for (int l = 0; l < imageHeight / numOfBlobs; l++) {
+                        if (pixCoords[centreCount] + k < imageWidth)
+                            avgPix[avgCount] = tempPixels[pixCoords[centreCount] + k + (j * imageWidth)];
+                    }
+                }
+
+//                tempPixels[centreCount] = averageColour(avgPix);
+
+                pixels[centreCount] = closeToColour(tempPixels[pixCoords[centreCount]]);
+                centreCount++;
+            }
+        }
+
+        for (int i = 0; i < pixels.length; i++) {
+            storePix[i] = pixels[i];
+        }
+
+        if (colour) {
+            for (int i = 0; i < pixels.length; i++) {
+                if (i % numOfBlobs > 0 && storePix[i] == storePix[i - 1]) {
+                    pixels[i] = pixels[i - 1];
+                } else if (i / numOfBlobs > 0 && storePix[i] == storePix[i - numOfBlobs]) {
+                    pixels[i] = pixels[i - numOfBlobs];
+                } else {
+                    pixels[i] = colourCount * -4500 - 1;
+                    colourCount++;
+                }
+            }
+
+            for (int i = 0; i < pixels.length; i++) {
+                if (i % numOfBlobs > 0 && storePix[i] == storePix[i - 1]
+                        && pixels[i] != pixels[i - 1]) {
+                    replace (pixels, pixels[i], pixels[i - 1]);
+                } else if (i / numOfBlobs > 0 && storePix[i] == storePix[i - numOfBlobs]
+                        && pixels[i] != pixels[i - numOfBlobs]) {
+                    replace(pixels, pixels[i], pixels[i - numOfBlobs]);
+                }
+            }
+        }
+
+        for (int i = 0; i < pixels.length; i++) {
+            tempPixels[pixCoords[i]] = pixels[i];
+        }
+
+        tempPixels = expandPixels(tempPixels, imageWidth, imageHeight);
+
+        bit = Bitmap.createBitmap(tempPixels, imageWidth, imageHeight, Bitmap.Config.ARGB_8888);
+
+        return bit;
+    }
+
+    public int[] expandPixels (int[] srcPix, int imageWidth, int imageHeight) {
+
+        int[] tempPixels = new int[imageWidth * imageHeight];
+
+        for (int i = 0; i < tempPixels.length; i++) {
+
+            int coord = i;
+            coord -= i % (imageWidth / numOfBlobs);
+            coord -= ((i / imageWidth) % (imageHeight / numOfBlobs)) * imageWidth;
+
+            tempPixels[i] = srcPix[coord];
+        }
+
+        return tempPixels;
+    }
+
+    public int closeToColour (int colour) {
+
+        int closestColour = Color.argb(255, Color.red(colour) - (int) (Color.red(colour) % (255 / blobAccuracy)),
+                Color.green(colour) - (int) (Color.green(colour) % (255 / blobAccuracy)),
+                Color.blue(colour) - (int) (Color.blue(colour) % (255 / blobAccuracy)));
+
+        return closestColour;
+    }
+
+    public Bitmap classic (Bitmap bit) {
+
+        int imageWidth = bit.getWidth();
+        int imageHeight = bit.getHeight();
+        int[] pixels = new int[imageWidth * imageHeight];
+        List<String> blobs = new ArrayList<>();
+        int colourCounter = 0;
+        boolean newColour;
+        boolean newBlob;
+
+        bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
+
+        for (int i = 0; i < pixels.length; i++) {
+
+            pixels[i] = closeToColour(pixels[i]);
+//            Log.i("PixColour", "" + pixels[i]);
+
+            newBlob = true;
+            for (int j = 0; j < blobs.size(); j++) {
+
+                if (getColour(blobs.get(j)) == pixels[i]) {
+                    if (nearBlob(blobs.get(j), i, imageWidth)) {
+                        newBlob = false;
+                        blobs.set(j, blobs.get(j) + i + "|");
+                        break;
+                    }
+                }
+
+            }
+
+            if (newBlob) {
+                colourCounter++;
+                blobs.add("" + pixels[i] + "|" + (colourCounter * -4500 - 1) + "?" + i + "|");
+            }
+
+        }
+
+        return bit;
+    }
+
+    public boolean nearBlob (String toCheck, int coord, int imageWidth) {
+
+        int index = toCheck.indexOf('?');
+        String toUse = toCheck;
+
+        toUse = toUse.substring(index + 1);
+
+//        Log.i("toUse", toUse);
+
+        try {
+            while (true) {
+                int blobCoord;
+
+//                Log.i("BLOBCOORD", toUse.substring(0, toUse.indexOf("|")));
+
+                blobCoord = Integer.parseInt(toUse.substring(0, toUse.indexOf("|")));
+
+                if (Math.abs(getX(blobCoord, imageWidth) - getX(coord, imageWidth)) < 10
+                        && Math.abs(getY(blobCoord, imageWidth) - getY(coord, imageWidth)) < 10) {
+                    return true;
+                }
+
+                if (toCheck.indexOf("|", index) == toCheck.lastIndexOf("|"))
+                    break;
+
+                toUse = toUse.substring(toUse.indexOf("|") + 1);
+
+//                if (toUse != null)
+//                    Log.i("toUse SECOND", toUse);
+
+//                Log.i("CHECK", "GOOD");
+            }
+//        } catch (StringIndexOutOfBoundsException e) {
+//            Log.i("toUse from nearBlob()", toCheck);
+//            Log.i("INDEX OUT OF BOUNDS", "!!!!!!!!" + e.getCause());
+//        } catch (NumberFormatException e) {
+//            Log.i("toUse from nearBlob()", toCheck);
+//            Log.i("INTEGER NOT PROPER", "??????");
+        } catch (Exception e) {
+//            Log.i("toUse from nearBlob()", toCheck);
+//            Log.i("UNKNOWN", "}}}}}}}");
+        }
+
+        return false;
+    }
+
+    public int getX (int coord, int imageWidth) {
+        return coord % imageWidth;
+    }
+    public int getY (int coord, int imageWidth) {
+        return coord / imageWidth;
+    }
+
+    public int getColour (String colour) {
+
+        int colourInt = 0;
+        int index = 0;
+
+        try {
+
+            for (int i = 0; colour.charAt(i) != '|'; i++)
+                index++;
+
+            colourInt = Integer.parseInt(colour.substring(0, index));
+//            Log.i("Colour", "" + colourInt);
+
+        } catch (Exception e) {
+//            Log.i("Colour from getColour()", colour);
+        }
+
+        return colourInt;
+    }
 
     public Bitmap getEdges (Bitmap bit) {
 
@@ -92,14 +404,6 @@ public class ImageAnalysis {
 
     }
 
-    public int closeToColour (int colour) {
-
-        int closestColour = Color.argb(255, Color.red(colour) - (int) (Color.red(colour) % (255 / blobAccuracy)),
-                Color.green(colour) - (int) (Color.green(colour) % (255 / blobAccuracy)),
-                Color.blue(colour) - (int) (Color.blue(colour) % (255 / blobAccuracy)));
-
-        return closestColour;
-    }
 
     public Bitmap getAmbientEdges (Bitmap bit) {
 
@@ -164,6 +468,31 @@ public class ImageAnalysis {
                 can.drawLine(x, y, x + 1, y + 1, colourPaint);
             }
         }
+
+//        int goodPixel;
+//        int areaOfCheck = 5;
+//        int bordLimitReq = 3;
+//
+//        for (int i = 0; i < pixels.length; i++) {
+//
+//            if (pixels[i] == Color.BLACK) {
+//                goodPixel = 0;
+//                for (int j = 0; j < areaOfCheck; j++) {
+//                    for (int k = 0; k < areaOfCheck; k++) {
+//                        if (i - areaOfCheck / 2 + j - ((k - areaOfCheck / 2) * bit.getWidth()) >= 0 && i - areaOfCheck / 2 + j - ((k - areaOfCheck / 2) * bit.getWidth()) < pixels.length - 1 && i - areaOfCheck / 2 + j - ((k - areaOfCheck / 2) * bit.getWidth()) != i && pixels[i - areaOfCheck / 2 + j - ((k - areaOfCheck / 2) * bit.getWidth())] == Color.BLACK) {
+//                            goodPixel++;
+//
+//                            if (goodPixel >= bordLimitReq)
+//                                break;
+//                        }
+//                    }
+//                }
+//
+//                if (goodPixel < bordLimitReq)
+//                    pixels[i] = Color.WHITE;
+//            }
+//
+//        }
 
         return newBit;
 
@@ -274,6 +603,7 @@ public class ImageAnalysis {
         int y = 0;
         int [] pixels = new int[width * height];
         int [] label = new int [width * height];
+        List<String> labels = new ArrayList<>();
 
         img = getAmbientEdges(img);
 
@@ -384,10 +714,22 @@ public class ImageAnalysis {
         return bitsy;
     }
 
-    public void replace(int [] label, int l1, int l2){
-        for(int i  = 0; i < label.length; i++){
-            if(label[i] == l1){
+    public void replace(int[] label, int l1, int l2) {
+
+        for(int i = 0; i < label.length; i++){
+            if(label[i] == l1) {
                 label[i] = l2;
+            }
+        }
+    }
+
+    public void replace(List<Integer> label, int l1, int l2) {
+
+        while (true) {
+            if(label.contains(l1)) {
+                label.set(label.indexOf(l1), l2);
+            } else {
+                break;
             }
         }
     }
@@ -411,55 +753,132 @@ public class ImageAnalysis {
 
 
 
-    public Bitmap speedBlobs (Bitmap bit) {
+    public Bitmap speedBlobs (Bitmap img) {
 
-        int imageWidth = bit.getWidth();
-        int imageHeight = bit.getHeight();
-        int[] pixels = new int[imageWidth * imageHeight];
-        int[] labels = new int[pixels.length];
-        getAmbientEdges(bit).getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
-        List<List<Integer>> labelTypes = new ArrayList<>();
-        boolean connect = false;
-        int newLabel = 1;
+        int width = img.getWidth();
+        int height = img.getHeight();
+        int check = 1;
+        int x = 0;
+        int y = 0;
+        int [] pixels = new int[width * height];
+        int [] label = new int [width * height];
+        List<Integer> newLabels = new ArrayList<>();
 
-        labels[0] = 1;
+        img = getAmbientEdges(img);
 
-        labelTypes.add(new ArrayList<Integer>());
+        img.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        for (int i = 1; i < pixels.length; i++) {
+        Arrays.fill(label, -1);
 
-            if (i % imageWidth > 0 && pixels[i - 1] != Color.BLACK && pixels[i] == pixels[i - 1]) {
-                labels[i] = labels[i - 1];
-                labelTypes.get(labels[i] - 1).add(i);
-            } else if (i / imageWidth > 0 && pixels[i - imageWidth] != Color.BLACK && pixels[i] == pixels[i - imageWidth]) {
-                labels[i] = labels[i - imageWidth];
-                labelTypes.get(labels[i] - 1).add(i);
-            } else {
-                labels[i] = ++newLabel;
-                labelTypes.add(new ArrayList<Integer>());
-                labelTypes.get(newLabel - 1).add(i);
+        label[0] = 0;
+
+        for(int i = 0; i < pixels.length - width - 1; i++){
+            int same = -1;
+            if(i % width == width - 1){
+                i++;
+                continue;
             }
 
-        }
-
-        for (int i = 0; i < labels.length; i++) {
-
-            if (i / imageWidth > 0 && pixels[i - imageWidth] != Color.BLACK
-                    && pixels[i] == pixels[i - imageWidth] && labels[i] != labels[i - imageWidth]) {
-
+            //check north
+            if(pixels[i] == pixels[i + width]){
+                label[i + width] = label[i];
+                same = 2;
+            }
+            //check west
+            if(pixels[i] == pixels[i + 1]){
+                label[i + 1] = label[i];
+                same = 1;
             }
 
+            //check northwest
+            if(pixels[i] == pixels[i + width + 1] && same != -1){
+                label[i + width + 1] = label[i];
+            }
+
+            if(pixels[i] == Color.BLACK) {
+                if (pixels[i + 1] == pixels[i + width] && pixels[i + 1] == pixels[i + width + 1]) {
+                    if (label[i + width] != -1) {
+                        label[i + 1] = label[i + width];
+                        label[i + width + 1] = label[i + width];
+                    } else if (label[i + 1] != -1) {
+                        label[i + width] = label[i + 1];
+                        label[i + width + 1] = label[i + 1];
+                    } else {
+                        label[i + 1] = check;
+                        label[i + width] = check;
+                        label[i + width + 1] = check;
+                        check++;
+                    }
+                } else if (pixels[i + 1] == pixels[i + width]) {
+                    if (label[i + 1] != -1) {
+                        label[i + width] = label[i + 1];
+                    } else if (label[i + width] != -1) {
+                        label[i + 1] = label[i + width];
+                    } else {
+                        label[i + width] = check;
+                        label[i + 1] = check;
+                        check++;
+                    }
+                } else if (pixels[i + 1] == pixels[i + width + 1]) {
+                    if (label[i + 1] != -1) {
+                        label[i + width + 1] = label[i + 1];
+                    } else {
+                        label[i + 1] = check;
+                        label[i + width + 1] = check;
+                        check++;
+                    }
+                } else if (pixels[i + width] == pixels[i + width + 1]) {
+                    if (label[i + width] != -1) {
+                        label[i + width + 1] = label[i + width];
+                    } else {
+                        label[i + width] = check;
+                        label[i + width + 1] = check;
+                        check++;
+                    }
+                }
+            }
         }
 
-        for (int i = 0; i < pixels.length; i++) {
-
-            pixels[i] = (labels[i] * -4500 - 1);
-
+        for (int i = 0; i < label.length; i++) {
+            newLabels.add(label[i]);
         }
 
-        bit = Bitmap.createBitmap(pixels, imageWidth, imageHeight, Bitmap.Config.ARGB_8888);
+        for(int i = pixels.length - 1; i >= width + 1; i--) {
+            if(label[i] != label[i - 1] && pixels[i - 1] != Color.BLACK){
+                replace(newLabels, label[i - 1], label[i]);
+            }
+            if(label[i] != label[i - width] && pixels[i - width] != Color.BLACK){
+                replace(newLabels, label[i - width], label[i]);
+            }
+        }
 
-        return bit;
+        for (int i = 0; i < label.length; i++) {
+            label[i] = newLabels.get(i);
+        }
+
+        Bitmap bitsy =  Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Paint color = new Paint();
+        Canvas pic = new Canvas(bitsy);
+        for(int i = 0; i < pixels.length; i++) {
+            x = i % width;
+            y = i / width;
+            color.setColor(label[i] * -4500 - 1);
+            pic.drawRect(x, y, x + 2, y + 2, color);
+        }//for
+
+
+        bitsy =  Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        pic = new Canvas(bitsy);
+        for(int i = 0; i < pixels.length; i++) {
+            x = i % width;
+            y = i / width;
+            color.setColor(label[i] * -4500 - 1);
+            pic.drawRect(x, y, x + 2, y + 2, color);
+        }//for
+
+        //shapeProcessor(label, width);
+
+        return bitsy;
     }
 
     public int[] shapeProcessor (int[] labels, int imageWidth) {
@@ -830,23 +1249,32 @@ public class ImageAnalysis {
         boolean doNotUse;
         double incRad = Math.PI / (2 * rayIntensity);
         int[] centrePoints = new int[numCentrePoints * numCentrePoints];
-        int[] colours = new int[centrePoints.length];
+        int[] colours = new int[numCentrePoints * numCentrePoints];
         int centreCounter = 0;
         int borderCount = 0;
         int storeCentre = 0;
         int alreadySwitched;
         int[] blobPixels;
-        boolean reflected;
-        boolean newCentre = false;
+        int reflected = 0;
+        int oldRadius = 0;
+        int centreX;
+        int centreY;
+        int superCentre = (imageHeight % 2 == 0)? pixels.length / 2 + imageWidth / 2 : pixels.length / 2;
+        boolean toBeNeg;
 
         bit.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight);
 
-        for (int j = 0; j < numCentrePoints; j++) {
-            for (int i = 0; i < numCentrePoints; i++) {
-                centrePoints[centreCounter] = pixels.length / 2 + ((i - numCentrePoints / 2) * imageWidth / numCentrePoints) + ((j - numCentrePoints / 2) * imageWidth * imageHeight / numCentrePoints);
-                centreCounter++;
+//        centrePoints = spiralCentrePoints(superCentre, imageWidth, imageHeight);
+
+        if (numCentrePoints > 1)
+            for (int j = 0; j < numCentrePoints; j++) {
+                for (int i = 0; i < numCentrePoints; i++) {
+                    centrePoints[centreCounter] = pixels.length / 2 + ((i - numCentrePoints / 2) * imageWidth / numCentrePoints) + ((j - numCentrePoints / 2) * imageWidth * imageHeight / numCentrePoints);
+                    centreCounter++;
+                }
             }
-        }
+        else
+            centrePoints[0] = pixels.length / 2 + imageWidth / 2;
 
         Arrays.fill(pixStore, -1);
 
@@ -855,7 +1283,8 @@ public class ImageAnalysis {
             colours[j] = (j + 1) * -4500 - 1;
             blobPixels = new int[pixels.length];
             alreadySwitched = 0;
-            reflected = false;
+            reflected = 0;
+            oldRadius = 0;
             storeCentre = centrePoints[j];
 
             if (pixStore[centre] != -1) {
@@ -877,14 +1306,41 @@ public class ImageAnalysis {
 
                 doNotUse = false;
                 if ((centre % imageWidth) + x < 0 || (centre % imageWidth) + x > imageWidth - 1)
-                    doNotUse = true;
+//                    if (reflected < reflectLimit) {
+//
+//                        cosVal = Math.cos(-Math.PI / 2);
+//                        sinVal = Math.sin(-Math.PI / 2);
+//
+//                        radius = 1;
+//
+//                        centre = centre + x + (y * imageWidth);
+//                        x = 0;
+//                        y = 0;
+//
+//                        reflected++;
+//
+//                    } else
+                        doNotUse = true;
                 else if ((centre / imageWidth) + y < 0 || (centre / imageWidth) + y > imageHeight - 1)
-                    doNotUse = true;
+//                    if (reflected < reflectLimit) {
+//
+//                        cosVal = Math.cos(-Math.PI / 2);
+//                        sinVal = Math.sin(-Math.PI / 2);
+//
+//                        radius = 1;
+//
+//                        centre = centre + x + (y * imageWidth);
+//                        x = 0;
+//                        y = 0;
+//
+//                        reflected++;
+//
+//                    } else
+                        doNotUse = true;
                 else if (pixels[centre + x + (y * imageWidth)] == Color.BLACK) {
-                    if (!reflected) {
+                    if (reflected < reflectLimit) {
 
-                        cosVal = Math.cos(radians - 4 * Math.PI / 6);
-                        sinVal = Math.sin(radians - 4 * Math.PI / 6);
+                        sinVal *= -1;
 
                         radius = 1;
 
@@ -892,7 +1348,7 @@ public class ImageAnalysis {
                         x = 0;
                         y = 0;
 
-                        reflected = true;
+                        reflected++;
                             
                     } else
                         borderCount++;
@@ -905,6 +1361,8 @@ public class ImageAnalysis {
 
                     alreadySwitched++;
                 }
+//                else if (oldRadius > 0 && radius - oldRadius > 100)
+//                    doNotUse = true;
 
                 if (!doNotUse && borderCount < borderLimit) {
                     blobPixels[i] = centre + x + (y * imageWidth);
@@ -913,8 +1371,9 @@ public class ImageAnalysis {
                     radians += incRad;
 
                     centre = storeCentre;
-                    reflected = false;
+                    reflected = 0;
 
+                    oldRadius = radius;
                     radius = 1;
 
                     cosVal = Math.cos(radians);
@@ -945,6 +1404,69 @@ public class ImageAnalysis {
 
         return bit;
 
+    }
+
+    public int[] spiralCentrePoints (int superCentre, int imageWidth, int imageHeight) {
+
+        int centreX;
+        int centreY;
+        boolean toBeNeg;
+        int centreCounter = 0;
+        int[] centrePoints = new int[numCentrePoints * numCentrePoints];
+
+        centrePoints[0] = superCentre;
+
+        for (int centreRadius = 1; centreRadius < (numCentrePoints + 1) / 2; centreRadius++) {
+            int cycleNum = centreRadius * 8;
+            int squareLength = (centreRadius * 2) + 1;
+
+            for (int i = 0; i < cycleNum; i++) {
+
+                toBeNeg = (i >= cycleNum / 2)? true : false;
+
+                centreX = i % (cycleNum / 2);
+
+                if (centreX < squareLength / 2) {
+                    centreX = centreX + 1;
+                } else if (centreX < squareLength + squareLength / 2 - 1) {
+                    centreX = centreRadius;
+                } else {
+                    centreX = (cycleNum / 2) - centreX - 1;
+                }
+
+                if (toBeNeg) {
+                    centreX *= -1;
+                }
+
+                centreY = i - cycleNum / 4;
+
+
+                toBeNeg = (centreY < 0 || centreY >= cycleNum / 2);
+
+                centreY += (centreY < 0)? cycleNum / 2 : 0;
+
+                centreY = centreY % (cycleNum / 2);
+
+                if (centreY < squareLength / 2) {
+                    centreY = centreY + 1;
+                } else if (centreY < squareLength + squareLength / 2 - 1) {
+                    centreY = centreRadius;
+                } else {
+                    centreY = (cycleNum / 2) - centreY - 1;
+                }
+
+                if (toBeNeg) {
+                    centreY *= -1;
+                }
+
+                centreCounter++;
+                centrePoints[centreCounter] = superCentre + (centreX * (imageWidth / numCentrePoints)) + (centreY * imageWidth * (imageHeight / numCentrePoints));
+
+            }
+
+        }
+
+        return centrePoints;
     }
 
 }

@@ -1,9 +1,11 @@
 package com.nirzvi.roboticsproject;
 
+import com.nirzvi.roboticslibrary.CannyEdgeDetector;
 import com.nirzvi.roboticslibrary.ImageAnalysis;
 import com.nirzvi.roboticslibrary.MyCamera;
 import com.nirzvi.roboticslibrary.MySensorManager;
 
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -28,6 +30,7 @@ public class MainActivity extends ActionBarActivity {
     float angle = 0;
     MySensorManager sm;
     MyCamera cam;
+    CannyEdgeDetector canEdge;
 
 
     @Override
@@ -40,10 +43,17 @@ public class MainActivity extends ActionBarActivity {
         colour = (TextView) findViewById(R.id.colour);
         img = (ImageView) findViewById(R.id.img);
         texture = (TextureView) findViewById(R.id.textureView);
+        canEdge = new CannyEdgeDetector();
+
+        BitmapFactory.Options d = new BitmapFactory.Options();
+        d.inScaled = false;
+        Bitmap colours = BitmapFactory.decodeResource(getResources(),R.drawable.chrome5, d);
+        imgA.chrome = colours;
+
         cam = new MyCamera(texture, true, this) {
             public void onCameraUpdated() {
 
-                //noButtonImage();
+//                img.setImageBitmap(imgA.blurMethod(imgA.chrome(texture.getBitmap()), true));
 
             }
         };
@@ -62,31 +72,34 @@ public class MainActivity extends ActionBarActivity {
 
     public void takeImage (View v) {
 
-        img.setImageBitmap(imgA.multiCircle(imgA.getAmbientEdges(BitmapFactory.decodeResource(getResources(), R.drawable.unnamed))));
+        img.setImageBitmap(imgA.blurMethod(imgA.chrome(texture.getBitmap()), true));
 
     }
 
 
     public void takeEdgeImage (View v) {
-
-        img.setImageBitmap(imgA.multiCircle(imgA.getAmbientEdges(texture.getBitmap())));
-        //img.setImageBitmap(imgA.multiCircle(texture.getBitmap()));
+        img.setImageBitmap(imgA.blurMethod(imgA.chrome(texture.getBitmap()), false));
 
     }
 
 
     public void getClosest (View v) {
-        img.setImageBitmap(imgA.getAmbientEdges(texture.getBitmap()));
+
+        img.setImageBitmap(imgA.chrome(texture.getBitmap()));
+
+//        canEdge.setSourceImage(texture.getBitmap());
+//        canEdge.setHighThreshold(1f);
+//        canEdge.setLowThreshold(0.1f);
+//        canEdge.process();
+//        img.setImageBitmap(canEdge.getEdgesImage());
 
     }
 
     public void incAcc (View v) {
-        imgA.blobAccuracy /= 1.1;
-        imgA.edgeAccuracy -= 2;
+        imgA.decreaseBlur();
     }
 
     public void decAcc (View v) {
-        imgA.blobAccuracy *= 1.1;
-        imgA.edgeAccuracy += 2;
+        imgA.increaseBlur();
     }
 }
